@@ -1,22 +1,22 @@
-__author__ = 'Enigma'
+__author__ = 'EnigmaBlade'
 
-#Fancy structure used for switch statement implementation
-class switch(object):
-	def __init__(self, value):
-		self.value = value
-		self.fall = False
+class ordered_dict(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._order = list(super().keys())
 
-	def __iter__(self):
-		"""Return the match method once, then stop"""
-		yield self.match
-		raise StopIteration
-	
-	def match(self, *args):
-		"""Indicate whether or not to enter a case suite"""
-		if self.fall or not args:
-			return True
-		elif self.value in args:
-			self.fall = True
-			return True
-		else:
-			return False
+    def __setitem__(self, key, value):
+        dict.__setitem__(self, key, value)
+        if key in self._order:
+            self._order.remove(key)
+        self._order.append(key)
+
+    def __delitem__(self, key):
+        dict.__delitem__(self, key)
+        self._order.remove(key)
+
+    def keys(self):
+        return self._order[:]
+
+    def items(self):
+        return [(key,self[key]) for key in self._order]

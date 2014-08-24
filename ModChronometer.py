@@ -16,9 +16,12 @@ r = init_reddit_session(config)
 sub = r.get_subreddit(config.subreddit, fetch=False)
 
 # Init storage and data
-buckets = []
-for hour in range(24):
-	buckets.append({})
+buckets = [dict() for n in range(24)]
+
+def create_action_dict():
+	d = ordered_dict((at, 0) for at in config.action_types)
+	d["Total"] = 0
+	return d
 
 def inc_bucket(time_struct, user, action):
 	hour = time_struct[3]
@@ -26,19 +29,14 @@ def inc_bucket(time_struct, user, action):
 	
 	# Add bucket if missing
 	if not user in bucket:
-		bucket[user] = [0, 0, 0]
+		bucket[user] = create_action_dict()
 	
 	# Inc total
-	bucket[user][2] += 1
+	bucket[user]["Total"] += 1
 	# Inc action type
 	# For types, see: http://www.reddit.com/dev/api#GET_about_log
-	for case in switch(action):
-		if case("removelink"):
-			bucket[user][0] += 1
-			break
-		if case("removecomment"):
-			bucket[user][1] += 1
-			break
+	if action in config.action_types:
+		bucket[user][action] += 1
 
 user_exclusions = list(map(str.lower, config.exclusions))
 
@@ -99,33 +97,46 @@ if successful:
 		f.write("{},{}\n\n"	.format(config.start_date, config.end_date))
 		
 		totals = []
+		types = create_action_dict().keys()
 		
 		# Output actions sorted hour and moderator
 		f.write("-----\n\n")
 		f.write("Raw\n")
-		f.write("Mod,removelink,removecomment,Total\n\n")
+		f.write("Mod")
+		for t in types:
+			f.write(",{}".format(t))
+		f.write("\n\n")
 		
-		for hour in range(len(buckets)):
-			f.write("{}\n".format(hour))
+		for h in range(len(buckets)):
+			f.write("{}\n".format(h))
 			
-			total = [0, 0, 0]
-			for name in buckets[hour]:
-				user_data = buckets[hour][name]
-				f.write("{},{},{},{}\n".format(name, user_data[0], user_data[1], user_data[2]))
-				
-				for c in range(len(total)):
-					total[c] += user_data[c]
+			total = create_action_dict()
+			for name in buckets[h]:
+				user_data = buckets[h][name]
+				f.write(name)
+				for t in types:
+					f.write(",{}".format(user_data[t]))
+					total[t] += user_data[t]
+				f.write("\n")
 			
-			f.write(",{},{},{}\n\n".format(total[0], total[1], total[2]))
 			totals.append(total)
+			for t in types:
+				f.write(",{}".format(total[t]))
+			f.write("\n\n")
 		
 		# Output action totals sorted by hour
 		f.write("-----\n\n")
 		f.write("Hour totals\n")
-		f.write("Hour,removelink,removecomment,Total\n\n")
+		f.write("Hour")
+		for t in types:
+			f.write(",{}".format(t))
+		f.write("\n\n")
 		
-		for hour in range(len(totals)):
-			total = totals[hour]
-			f.write("{},{},{},{}\n".format(hour, total[0], total[1], total[2]))
+		for h in range(len(totals)):
+			total = totals[h]
+			f.write(str(h))
+			for t in types:
+				f.write(",{}".format(total[t]))
+			f.write("\n")
 
 print("Done!")
