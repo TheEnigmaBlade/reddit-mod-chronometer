@@ -16,12 +16,18 @@ r = init_reddit_session(config)
 sub = r.get_subreddit(config.subreddit, fetch=False)
 
 # Init storage and data
-buckets = [dict() for n in range(24)]
-
 def create_action_dict():
 	d = ordered_dict((at, 0) for at in config.action_types)
 	d["Total"] = 0
 	return d
+
+buckets = [dict() for n in range(24)]
+if config.include_lazy:
+	mods = sub.get_moderators()
+	for mod in mods:
+		if not mod in config.exclusions:
+			for h in range(len(buckets)):
+				buckets[h][mod.name] = create_action_dict()
 
 def inc_bucket(time_struct, user, action):
 	hour = time_struct[3]
