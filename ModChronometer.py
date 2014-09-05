@@ -15,6 +15,9 @@ import config
 r = init_reddit_session(config)
 sub = r.get_subreddit(config.subreddit, fetch=False)
 
+# Set up some settings
+user_exclusions = list(map(str.lower, config.exclusions))
+
 # Init storage and data
 def create_action_dict():
 	d = ordered_dict((at, 0) for at in config.action_types)
@@ -25,7 +28,7 @@ buckets = [dict() for n in range(24)]
 if config.include_lazy:
 	mods = sub.get_moderators()
 	for mod in mods:
-		if not mod in config.exclusions:
+		if not mod in user_exclusions:
 			for h in range(len(buckets)):
 				buckets[h][mod.name] = create_action_dict()
 
@@ -37,14 +40,13 @@ def inc_bucket(time_struct, user, action):
 	if not user in bucket:
 		bucket[user] = create_action_dict()
 	
-	# Inc total
-	bucket[user]["Total"] += 1
+	# Inc total if not excluded
+	if not action in config.action_exclusions:
+		bucket[user]["Total"] += 1
+	
 	# Inc action type
-	# For types, see: http://www.reddit.com/dev/api#GET_about_log
 	if action in config.action_types:
 		bucket[user][action] += 1
-
-user_exclusions = list(map(str.lower, config.exclusions))
 
 # Go!
 done = False
