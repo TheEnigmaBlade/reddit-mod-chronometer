@@ -1,10 +1,7 @@
-#!/usr/bin/env python
-
 __author__ = 'Enigma'
-__version__ = 1.0
 
-import re
 import praw
+from praw.errors import *
 
 #Connection management
 
@@ -17,6 +14,9 @@ def init_reddit_session(config):
 			r.login(config.username, config.password)
 		print("done!")
 		return r
+	except InvalidUserPass:
+		print("Failed, invalid password")
+		return None
 	except Exception as e:
 		print("Failed to connect to reddit: {0}".format(e))
 		return None

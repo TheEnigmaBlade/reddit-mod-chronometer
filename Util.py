@@ -1,4 +1,4 @@
-__author__ = 'EnigmaBlade'
+__author__ = 'Enigma'
 
 class ordered_dict(dict):
     def __init__(self, *args, **kwargs):

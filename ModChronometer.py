@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 __author__ = 'Enigma'
 __version__ = 1.0
@@ -13,6 +13,9 @@ import config
 
 # Create connection to reddit
 r = init_reddit_session(config)
+if r is None:
+	sys.exit("Cannot run without an authenticated reddit connection")
+
 sub = r.get_subreddit(config.subreddit, fetch=False)
 
 # Set up some settings
@@ -99,8 +102,9 @@ destroy_reddit_session(r)
 
 # Output
 if successful:
-	print("Saving data to {}".format(config.data_file))
-	with open(config.data_file, "w+") as f:
+	formatted_data_file = config.data_file.format(subreddit=config.subreddit, start_date=config.start_date.isoformat(), end_date=config.end_date.isoformat(), include_lazy=config.include_lazy)
+	print("Saving data to {}".format(formatted_data_file))
+	with open(formatted_data_file, "w+") as f:
 		f.write("/r/{}\n"	.format(config.subreddit))
 		f.write("{},{}\n\n"	.format(config.start_date, config.end_date))
 		
