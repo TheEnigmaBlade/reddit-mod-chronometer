@@ -12,7 +12,7 @@ from RedditUtil import *
 import config
 
 # Create connection to reddit
-r = init_reddit_session(config)
+r = init_reddit_session(config, {"modlog"})
 if r is None:
 	sys.exit("Cannot run without an authenticated reddit connection")
 
@@ -61,6 +61,11 @@ count = 0
 try:
 	while not done:
 		log = sub.get_mod_log(limit=100, params={"after": last})
+		if len(log) == 0:
+			print("Reached an empty block!")
+			done = True
+			break
+		
 		for log_entry in log:
 			created_utc = log_entry.created_utc
 			time_utc = gmtime(created_utc)

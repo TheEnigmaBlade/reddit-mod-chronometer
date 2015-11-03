@@ -1,9 +1,11 @@
 from datetime import date
 
 # Reddit connection info
-user_agent = "Mod Chronometer, run by REDDIT_USERNAME"
-username = "REDDIT_USERNAME"					# Reddit account with mod access to your subreddit
-password = "REDDIT_PASSWORD"					# ^'s account password
+user_agent		= "Mod Chronometer, run by REDDIT_USERNAME"
+username		= "REDDIT_USERNAME"					# Reddit account with mod access to your subreddit
+password		= "REDDIT_PASSWORD"					# ^'s account password
+oauth_id		= "OAUTH_PUBLIC"					# OAuth ID for a registered app
+oauth_secret	= "OAUTH_SECRET"					# OAuth secret for the same app
 
 # Bot configuration
 subreddit			= "SUBREDDIT"						# Subreddit from which the mod log is being accessed
