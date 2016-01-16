@@ -58,13 +58,14 @@ last = None
 last_time = -1
 count = 0
 
+actual_end_date = config.end_date
+
 try:
 	while not done:
 		log = sub.get_mod_log(limit=100, params={"after": last})
-		if len(log) == 0:
-			print("Reached an empty block!")
-			done = True
-			break
+		log = list(log)
+		
+		new_last_time = last_time
 		
 		for log_entry in log:
 			created_utc = log_entry.created_utc
@@ -82,15 +83,23 @@ try:
 				break
 			
 			# Check if the last known action (I don't trust the API's ordering)
-			if log_entry.target_fullname is not None and (created_utc < last_time or last_time < 0):
+			if log_entry.target_fullname is not None and (created_utc < new_last_time or new_last_time < 0):
 				last = log_entry.id
-				last_time = created_utc
+				new_last_time = created_utc
 		
-		count += 100
-		last_date = gmtime(last_time)
+		count += len(log)
+		last_date = gmtime(new_last_time)
 		print("On {}/{}/{}: {} parsed".format(last_date[1], last_date[2], last_date[0], count))
+		
+		if len(log) < 100 or new_last_time == last_time:
+			print("Reached the end of logs")
+			done = True
+		
+		last_time = new_last_time
 	
 	successful = True
+	actual_end_time = gmtime(created_utc)
+	actual_end_date = date(actual_end_time[0], actual_end_time[1], actual_end_time[2])
 
 # Don't have permission to view the log
 except (praw.errors.ModeratorRequired, praw.errors.ModeratorOrScopeRequired, HTTPError) as e:
@@ -107,11 +116,11 @@ destroy_reddit_session(r)
 
 # Output
 if successful:
-	formatted_data_file = config.data_file.format(subreddit=config.subreddit, start_date=config.start_date.isoformat(), end_date=config.end_date.isoformat(), include_lazy=config.include_lazy)
+	formatted_data_file = config.data_file.format(subreddit=config.subreddit, start_date=config.start_date.isoformat(), end_date=actual_end_date.isoformat(), include_lazy=config.include_lazy)
 	print("Saving data to {}".format(formatted_data_file))
 	with open(formatted_data_file, "w+") as f:
 		f.write("/r/{}\n"	.format(config.subreddit))
-		f.write("{},{}\n\n"	.format(config.start_date, config.end_date))
+		f.write("{},{}\n\n"	.format(config.start_date, actual_end_date))
 		
 		totals = []
 		types = create_action_dict().keys()
